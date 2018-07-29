@@ -4,6 +4,8 @@ import (
 	"github.com/hackborn/phly"
 	"image/png"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 const (
@@ -11,8 +13,9 @@ const (
 	save_imgoutput = "0"
 )
 
-// load struct node images from a filename.
+// save struct saves image items.
 type save struct {
+	File string `json:"file,omitempty"`
 }
 
 func (n *save) Run(args phly.RunArgs, input, output phly.Pins) error {
@@ -37,7 +40,7 @@ func (n *save) runDoc(args phly.RunArgs, srcdoc *phly.Doc, output phly.Pins) err
 			if !ok {
 				return phly.BadRequestErr
 			}
-			err = phly.MergeErrors(err, n.saveImage(img))
+			err = phly.MergeErrors(err, n.saveImage(args, img))
 			// Always just pass through to output
 			dstpage.AddItem(img)
 		}
@@ -51,18 +54,36 @@ func (n *save) runDoc(args phly.RunArgs, srcdoc *phly.Doc, output phly.Pins) err
 	return err
 }
 
-func (n *save) saveImage(img *PhlyImage) error {
+func (n *save) saveImage(args phly.RunArgs, img *PhlyImage) error {
 	if img == nil || img.Img == nil {
 		return phly.BadRequestErr
 	}
 
-	dstname := `C:\tmp\huh2.png`
+	dstname, err := n.filename(args, img)
+	if err != nil {
+		return err
+	}
 	f, err := os.Create(dstname)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	return png.Encode(f, img.Img)
+}
+
+func (n *save) filename(args phly.RunArgs, img *PhlyImage) (string, error) {
+	// Start with getting the necessary pieces from the source
+	src := img.SourceFile
+	srcdir := filepath.Dir(src) + string(filepath.Separator)
+	srcext := filepath.Ext(src)
+	srcbase := strings.TrimSuffix(filepath.Base(src), srcext)
+
+	filename := n.File
+	filename = strings.Replace(filename, "${src}", src, -1)
+	filename = strings.Replace(filename, "${srcdir}", srcdir, -1)
+	filename = strings.Replace(filename, "${srcbase}", srcbase, -1)
+	filename = strings.Replace(filename, "${srcext}", srcext, -1)
+	return filename, nil
 }
 
 func (n *save) Instantiate(cfg interface{}) (phly.Node, error) {
