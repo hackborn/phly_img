@@ -1,9 +1,15 @@
 package phly_img
 
 import (
+	"errors"
 	"github.com/hackborn/phly"
+	"go/constant"
+	"go/token"
+	"go/types"
 	"golang.org/x/image/draw"
 	"image"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -13,6 +19,9 @@ const (
 
 // scale node scales images.
 type scale struct {
+	Width  string `json:"width,omitempty"`
+	Height string `json:"height,omitempty"`
+
 	Abs Sizei `json:"abs,omitempty"`
 	Rel Sizef `json:"rel,omitempty"`
 }
@@ -57,15 +66,56 @@ func (n *scale) scaleImage(img *PhlyImage, page *phly.Page) error {
 	}
 
 	srcr := img.Img.Bounds()
-	scaler := draw.BiLinear.NewScaler(200, 200, srcr.Size().X, srcr.Size().Y)
+	dstsize, err := n.makeSize(srcr.Size())
+	if err != nil {
+		return err
+	}
+	scaler := draw.BiLinear.NewScaler(dstsize.X, dstsize.Y, srcr.Size().X, srcr.Size().Y)
 
-	dstr := image.Rect(0, 0, 200, 200)
+	dstr := image.Rect(0, 0, dstsize.X, dstsize.Y)
 	dst := image.NewRGBA(dstr)
 	ops := draw.Options{}
 	scaler.Scale(dst, dstr, img.Img, srcr, draw.Over, &ops)
 
 	page.AddItem(&PhlyImage{Img: dst, SourceFile: img.SourceFile})
 	return nil
+}
+
+func (n *scale) makeSize(srcsize image.Point) (image.Point, error) {
+	// Make input strings for evaluation
+	xstr := strconv.Itoa(srcsize.X)
+	ystr := strconv.Itoa(srcsize.Y)
+	wstr := n.Width
+	wstr = strings.Replace(wstr, "${w}", xstr, -1)
+	wstr = strings.Replace(wstr, "${h}", ystr, -1)
+	hstr := n.Height
+	hstr = strings.Replace(hstr, "${w}", xstr, -1)
+	hstr = strings.Replace(hstr, "${h}", ystr, -1)
+
+	// Evaluate
+	fs := token.NewFileSet()
+	wtv, err := types.Eval(fs, nil, token.NoPos, wstr)
+	if err != nil {
+		return image.Point{}, err
+	}
+	htv, err := types.Eval(fs, nil, token.NoPos, hstr)
+	if err != nil {
+		return image.Point{}, err
+	}
+
+	// Extract
+	wv := constant.ToInt(wtv.Value)
+	hv := constant.ToInt(htv.Value)
+	if wv.Kind() != constant.Int || hv.Kind() != constant.Int {
+		return image.Point{}, errors.New("Unparseable scale " + wstr + " or " + hstr)
+	}
+	wi, _ := constant.Int64Val(wv)
+	hi, _ := constant.Int64Val(hv)
+	if wi < 1 || hi < 1 {
+		return image.Point{}, errors.New("Unparseable scale " + wstr + " or " + hstr)
+	}
+
+	return image.Point{int(wi), int(hi)}, nil
 }
 
 func (n *scale) Instantiate(cfg interface{}) (phly.Node, error) {

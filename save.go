@@ -59,7 +59,7 @@ func (n *save) saveImage(args phly.RunArgs, img *PhlyImage) error {
 		return phly.BadRequestErr
 	}
 
-	dstname, err := n.filename(args, img)
+	dstname, err := n.makeFilename(args, img)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (n *save) saveImage(args phly.RunArgs, img *PhlyImage) error {
 	return png.Encode(f, img.Img)
 }
 
-func (n *save) filename(args phly.RunArgs, img *PhlyImage) (string, error) {
+func (n *save) makeFilename(args phly.RunArgs, img *PhlyImage) (string, error) {
 	// Start with getting the necessary pieces from the source
 	src := img.SourceFile
 	srcdir := filepath.Dir(src) + string(filepath.Separator)
