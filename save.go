@@ -19,7 +19,11 @@ type save struct {
 }
 
 func (n *save) Describe() phly.NodeDescr {
-	return phly.NodeDescr{Id: "phly/img/save", Name: "Save Image"}
+	descr := phly.NodeDescr{Id: "phly/img/save", Name: "Save Image", Purpose: "Save images to a file."}
+	descr.Cfgs = append(descr.Cfgs, phly.CfgDescr{Name: "file", Purpose: "The name of the saved file. Allows variables `${src}` (the source file path), `${srcdir}` (the source directory), `${srcbase}` (the source filename base, minus the extension) and  `${srcext}` (the source extension)."})
+	descr.InputPins = append(descr.InputPins, phly.PinDescr{Name: save_imginput, Purpose: "Image input."})
+	descr.OutputPins = append(descr.OutputPins, phly.PinDescr{Name: save_imgoutput, Purpose: "Image output. All input items are provided, even if the save failed."})
+	return descr
 }
 
 func (n *save) Run(args phly.RunArgs, input, output phly.Pins) error {
