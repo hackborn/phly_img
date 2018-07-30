@@ -21,9 +21,6 @@ const (
 type scale struct {
 	Width  string `json:"width,omitempty"`
 	Height string `json:"height,omitempty"`
-
-	Abs Sizei `json:"abs,omitempty"`
-	Rel Sizef `json:"rel,omitempty"`
 }
 
 func (n *scale) Run(args phly.RunArgs, input, output phly.Pins) error {
