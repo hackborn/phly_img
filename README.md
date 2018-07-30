@@ -12,7 +12,7 @@ This is an addon pack for the [phly pipeline utility](https://github.com/hackbor
     * input **0**. Image input.
     * output **0**. Image output. All input items are provided, even if the save failed.
 * **Scale Image** (phly/img/scale). Resize images.
-    * cfg **width**. The width of the final image. Allows variables `${w}` (source width) and `${h}` (source height) and arithmetic expressions (i.e. "(${w} * 0.5) + 10"
-    * cfg **height**. The height of the final image. Allows variables `${w}` (source width) and `${h}` (source height) and arithmetic expressions (i.e. "(${w} * 0.5) + 10"
+    * cfg **width**. The width of the final image. Allows variables `${w}` (source width) and `${h}` (source height) and arithmetic expressions (i.e. "(${w} * 0.5) + 10").
+    * cfg **height**. The height of the final image. Allows variables `${w}` (source width) and `${h}` (source height) and arithmetic expressions (i.e. "(${w} * 0.5) + 10").
     * input **0**. Image input.
     * output **0**. The resized images.

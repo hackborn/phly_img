@@ -25,8 +25,8 @@ type scale struct {
 
 func (n *scale) Describe() phly.NodeDescr {
 	descr := phly.NodeDescr{Id: "phly/img/scale", Name: "Scale Image", Purpose: "Resize images."}
-	descr.Cfgs = append(descr.Cfgs, phly.CfgDescr{Name: "width", Purpose: "The width of the final image. Allows variables `${w}` (source width) and `${h}` (source height) and arithmetic expressions (i.e. \"(${w} * 0.5) + 10\""})
-	descr.Cfgs = append(descr.Cfgs, phly.CfgDescr{Name: "height", Purpose: "The height of the final image. Allows variables `${w}` (source width) and `${h}` (source height) and arithmetic expressions (i.e. \"(${w} * 0.5) + 10\""})
+	descr.Cfgs = append(descr.Cfgs, phly.CfgDescr{Name: "width", Purpose: "The width of the final image. Allows variables `${w}` (source width) and `${h}` (source height) and arithmetic expressions (i.e. \"(${w} * 0.5) + 10\")."})
+	descr.Cfgs = append(descr.Cfgs, phly.CfgDescr{Name: "height", Purpose: "The height of the final image. Allows variables `${w}` (source width) and `${h}` (source height) and arithmetic expressions (i.e. \"(${w} * 0.5) + 10\")."})
 	descr.InputPins = append(descr.InputPins, phly.PinDescr{Name: scale_imginput, Purpose: "Image input."})
 	descr.OutputPins = append(descr.OutputPins, phly.PinDescr{Name: scale_imgoutput, Purpose: "The resized images."})
 	return descr
