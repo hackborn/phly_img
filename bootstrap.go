@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	phly.Register("phly/img/load", &load{})
-	phly.Register("phly/img/save", &save{})
-	phly.Register("phly/img/scale", &scale{})
+	phly.Register(&load{})
+	phly.Register(&save{})
+	phly.Register(&scale{})
 }

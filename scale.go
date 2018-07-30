@@ -23,6 +23,10 @@ type scale struct {
 	Height string `json:"height,omitempty"`
 }
 
+func (n *scale) Describe() phly.NodeDescr {
+	return phly.NodeDescr{Id: "phly/img/scale", Name: "Scale Image"}
+}
+
 func (n *scale) Run(args phly.RunArgs, input, output phly.Pins) error {
 	var err error
 	for _, doc := range input.Get(scale_imginput) {

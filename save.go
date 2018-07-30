@@ -18,6 +18,10 @@ type save struct {
 	File string `json:"file,omitempty"`
 }
 
+func (n *save) Describe() phly.NodeDescr {
+	return phly.NodeDescr{Id: "phly/img/save", Name: "Save Image"}
+}
+
 func (n *save) Run(args phly.RunArgs, input, output phly.Pins) error {
 	var err error
 	for _, doc := range input.Get(save_imginput) {

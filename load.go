@@ -15,6 +15,13 @@ const (
 type load struct {
 }
 
+func (n *load) Describe() phly.NodeDescr {
+	descr := phly.NodeDescr{Id: "phly/img/load", Name: "Load Image"}
+	descr.InputPins = append(descr.InputPins, phly.PinDescr{Name: file_stringinput, Purpose: "Supply file names to load."})
+	descr.OutputPins = append(descr.OutputPins, phly.PinDescr{Name: file_imgoutput, Purpose: "The loaded images, one for each file name input."})
+	return descr
+}
+
 func (n *load) Run(args phly.RunArgs, input, output phly.Pins) error {
 	var err error
 	for _, doc := range input.Get(file_stringinput) {
