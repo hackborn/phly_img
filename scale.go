@@ -54,7 +54,7 @@ func (n *scale) runDoc(args phly.RunArgs, srcdoc *phly.Doc, output phly.Pins) er
 			if !ok {
 				return phly.BadRequestErr
 			}
-			err = phly.MergeErrors(err, n.scaleImage(img, dstpage))
+			err = phly.MergeErrors(err, n.scaleImage(args, img, dstpage))
 		}
 		if len(dstpage.Items) > 0 {
 			dstdoc.AddPage(dstpage)
@@ -66,13 +66,13 @@ func (n *scale) runDoc(args phly.RunArgs, srcdoc *phly.Doc, output phly.Pins) er
 	return err
 }
 
-func (n *scale) scaleImage(img *PhlyImage, page *phly.Page) error {
+func (n *scale) scaleImage(args phly.RunArgs, img *PhlyImage, page *phly.Page) error {
 	if img == nil || img.Img == nil {
 		return phly.BadRequestErr
 	}
 
 	srcr := img.Img.Bounds()
-	dstsize, err := n.makeSize(srcr.Size())
+	dstsize, err := n.makeSize(args, srcr.Size())
 	if err != nil {
 		return err
 	}
@@ -87,41 +87,46 @@ func (n *scale) scaleImage(img *PhlyImage, page *phly.Page) error {
 	return nil
 }
 
-func (n *scale) makeSize(srcsize image.Point) (image.Point, error) {
+func (n *scale) makeSize(args phly.RunArgs, srcsize image.Point) (image.Point, error) {
+	x, err := n.makeDimension(srcsize, n.Width, args.ClaValue("width"))
+	if err != nil {
+		return image.Point{}, err
+	}
+	y, err := n.makeDimension(srcsize, n.Height, args.ClaValue("height"))
+	if err != nil {
+		return image.Point{}, err
+	}
+	return image.Point{x, y}, nil
+}
+
+func (n *scale) makeDimension(srcsize image.Point, str, cla string) (int, error) {
 	// Make input strings for evaluation
+	if cla != "" {
+		str = cla
+	}
 	xstr := strconv.Itoa(srcsize.X)
 	ystr := strconv.Itoa(srcsize.Y)
-	wstr := n.Width
-	wstr = strings.Replace(wstr, "${w}", xstr, -1)
-	wstr = strings.Replace(wstr, "${h}", ystr, -1)
-	hstr := n.Height
-	hstr = strings.Replace(hstr, "${w}", xstr, -1)
-	hstr = strings.Replace(hstr, "${h}", ystr, -1)
+	str = strings.Replace(str, "${w}", xstr, -1)
+	str = strings.Replace(str, "${h}", ystr, -1)
 
 	// Evaluate
 	fs := token.NewFileSet()
-	wtv, err := types.Eval(fs, nil, token.NoPos, wstr)
+	tv, err := types.Eval(fs, nil, token.NoPos, str)
 	if err != nil {
-		return image.Point{}, err
-	}
-	htv, err := types.Eval(fs, nil, token.NoPos, hstr)
-	if err != nil {
-		return image.Point{}, err
+		return 0, err
 	}
 
 	// Extract
-	wv := constant.ToInt(wtv.Value)
-	hv := constant.ToInt(htv.Value)
-	if wv.Kind() != constant.Int || hv.Kind() != constant.Int {
-		return image.Point{}, errors.New("Unparseable scale " + wstr + " or " + hstr)
+	v := constant.ToInt(tv.Value)
+	if v.Kind() != constant.Int {
+		return 0, errors.New("Unparseable scale " + str)
 	}
-	wi, _ := constant.Int64Val(wv)
-	hi, _ := constant.Int64Val(hv)
-	if wi < 1 || hi < 1 {
-		return image.Point{}, errors.New("Unparseable scale " + wstr + " or " + hstr)
+	i, _ := constant.Int64Val(v)
+	if i < 1 {
+		return 0, errors.New("Unparseable scale " + str)
 	}
 
-	return image.Point{int(wi), int(hi)}, nil
+	return int(i), nil
 }
 
 func (n *scale) Instantiate(cfg interface{}) (phly.Node, error) {
