@@ -44,7 +44,7 @@ func (n *load) runDoc(args phly.RunArgs, srcdoc *phly.Doc, output phly.Pins) err
 			if !ok {
 				return phly.BadRequestErr
 			}
-			err = phly.MergeErrors(err, n.loadFile(file, dstpage))
+			err = phly.MergeErrors(err, n.loadFile(args.Filename(file), dstpage))
 		}
 		if len(dstpage.Items) > 0 {
 			dstdoc.AddPage(dstpage)
