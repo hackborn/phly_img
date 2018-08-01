@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	scale_imginput  = "0"
-	scale_imgoutput = "0"
+	scale_imginput  = "in"
+	scale_imgoutput = "out"
 )
 
 // scale node scales images.

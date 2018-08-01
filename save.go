@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	save_imginput  = "0"
-	save_imgoutput = "0"
+	save_imginput  = "in"
+	save_imgoutput = "out"
 )
 
 // save struct saves image items.

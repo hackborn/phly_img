@@ -8,7 +8,7 @@ import (
 
 const (
 	file_stringinput = "file"
-	file_imgoutput   = "0"
+	file_imgoutput   = "out"
 )
 
 // load struct node images from a filename.
