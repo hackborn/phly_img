@@ -22,6 +22,10 @@ func (n *load) Describe() phly.NodeDescr {
 	return descr
 }
 
+func (n *load) Instantiate(args phly.InstantiateArgs, cfg interface{}) (phly.Node, error) {
+	return &load{}, nil
+}
+
 func (n *load) Run(args phly.RunArgs, input, output phly.Pins) error {
 	var err error
 	for _, doc := range input.Get(file_stringinput) {
@@ -68,8 +72,4 @@ func (n *load) loadFile(name string, page *phly.Page) error {
 	}
 	page.AddItem(&PhlyImage{Img: img, SourceFile: name})
 	return nil
-}
-
-func (n *load) Instantiate(cfg interface{}) (phly.Node, error) {
-	return &load{}, nil
 }

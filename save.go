@@ -26,6 +26,10 @@ func (n *save) Describe() phly.NodeDescr {
 	return descr
 }
 
+func (n *save) Instantiate(args phly.InstantiateArgs, cfg interface{}) (phly.Node, error) {
+	return &save{}, nil
+}
+
 func (n *save) Run(args phly.RunArgs, input, output phly.Pins) error {
 	var err error
 	for _, doc := range input.Get(save_imginput) {
@@ -92,8 +96,4 @@ func (n *save) makeFilename(args phly.RunArgs, img *PhlyImage) (string, error) {
 	filename = strings.Replace(filename, "${srcbase}", srcbase, -1)
 	filename = strings.Replace(filename, "${srcext}", srcext, -1)
 	return filename, nil
-}
-
-func (n *save) Instantiate(cfg interface{}) (phly.Node, error) {
-	return &save{}, nil
 }

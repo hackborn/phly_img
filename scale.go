@@ -32,6 +32,10 @@ func (n *scale) Describe() phly.NodeDescr {
 	return descr
 }
 
+func (n *scale) Instantiate(args phly.InstantiateArgs, cfg interface{}) (phly.Node, error) {
+	return &scale{}, nil
+}
+
 func (n *scale) Run(args phly.RunArgs, input, output phly.Pins) error {
 	var err error
 	for _, doc := range input.Get(scale_imginput) {
@@ -127,8 +131,4 @@ func (n *scale) makeDimension(srcsize image.Point, str, cla string) (int, error)
 	}
 
 	return int(i), nil
-}
-
-func (n *scale) Instantiate(cfg interface{}) (phly.Node, error) {
-	return &scale{}, nil
 }
