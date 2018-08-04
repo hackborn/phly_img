@@ -75,6 +75,10 @@ func (n *save) saveImage(args phly.RunArgs, img *PhlyImage) error {
 	if err != nil {
 		return err
 	}
+	err = n.makeDir(dstname)
+	if err != nil {
+		return nil
+	}
 	f, err := os.Create(dstname)
 	if err != nil {
 		return err
@@ -86,7 +90,7 @@ func (n *save) saveImage(args phly.RunArgs, img *PhlyImage) error {
 func (n *save) makeFilename(args phly.RunArgs, img *PhlyImage) (string, error) {
 	// Start with getting the necessary pieces from the source
 	src := img.SourceFile
-	srcdir := filepath.Dir(src) + string(filepath.Separator)
+	srcdir := filepath.Dir(src)
 	srcext := filepath.Ext(src)
 	srcbase := strings.TrimSuffix(filepath.Base(src), srcext)
 
@@ -96,4 +100,13 @@ func (n *save) makeFilename(args phly.RunArgs, img *PhlyImage) (string, error) {
 	filename = strings.Replace(filename, "${srcbase}", srcbase, -1)
 	filename = strings.Replace(filename, "${srcext}", srcext, -1)
 	return filename, nil
+}
+
+// makeDir() makes the dir if it doesn't exist.
+func (n *save) makeDir(filename string) error {
+	dir := filepath.Dir(filename)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, os.ModeDir)
+	}
+	return nil
 }
