@@ -87,6 +87,7 @@ func (n *save) saveImage(args phly.RunArgs, img *PhlyImage) error {
 	return png.Encode(f, img.Img)
 }
 
+// makeFilename() applies my variables to make the filename.
 func (n *save) makeFilename(args phly.RunArgs, img *PhlyImage) (string, error) {
 	// Start with getting the necessary pieces from the source
 	src := img.SourceFile
@@ -94,12 +95,7 @@ func (n *save) makeFilename(args phly.RunArgs, img *PhlyImage) (string, error) {
 	srcext := filepath.Ext(src)
 	srcbase := strings.TrimSuffix(filepath.Base(src), srcext)
 
-	filename := n.File
-	filename = strings.Replace(filename, "${src}", src, -1)
-	filename = strings.Replace(filename, "${srcdir}", srcdir, -1)
-	filename = strings.Replace(filename, "${srcbase}", srcbase, -1)
-	filename = strings.Replace(filename, "${srcext}", srcext, -1)
-	return filename, nil
+	return args.Env.ReplaceVars(n.File, "${srcpath}", src, "${srcdir}", srcdir, "${srcbase}", srcbase, "${srcext}", srcext), nil
 }
 
 // makeDir() makes the dir if it doesn't exist.

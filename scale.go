@@ -1,15 +1,10 @@
 package phly_img
 
 import (
-	"errors"
 	"github.com/hackborn/phly"
-	"go/constant"
-	"go/token"
-	"go/types"
+	"github.com/micro-go/parse"
 	"golang.org/x/image/draw"
 	"image"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -92,43 +87,22 @@ func (n *scale) scaleImage(args phly.RunArgs, img *PhlyImage, page *phly.Page) e
 }
 
 func (n *scale) makeSize(args phly.RunArgs, srcsize image.Point) (image.Point, error) {
-	x, err := n.makeDimension(srcsize, n.Width, args.ClaValue("width"))
+	x, err := n.makeDimension(args, srcsize, n.Width, args.ClaValue("width"))
 	if err != nil {
 		return image.Point{}, err
 	}
-	y, err := n.makeDimension(srcsize, n.Height, args.ClaValue("height"))
+	y, err := n.makeDimension(args, srcsize, n.Height, args.ClaValue("height"))
 	if err != nil {
 		return image.Point{}, err
 	}
 	return image.Point{x, y}, nil
 }
 
-func (n *scale) makeDimension(srcsize image.Point, str, cla string) (int, error) {
+func (n *scale) makeDimension(args phly.RunArgs, srcsize image.Point, str, cla string) (int, error) {
 	// Make input strings for evaluation
 	if cla != "" {
 		str = cla
 	}
-	xstr := strconv.Itoa(srcsize.X)
-	ystr := strconv.Itoa(srcsize.Y)
-	str = strings.Replace(str, "${w}", xstr, -1)
-	str = strings.Replace(str, "${h}", ystr, -1)
-
-	// Evaluate
-	fs := token.NewFileSet()
-	tv, err := types.Eval(fs, nil, token.NoPos, str)
-	if err != nil {
-		return 0, err
-	}
-
-	// Extract
-	v := constant.ToInt(tv.Value)
-	if v.Kind() != constant.Int {
-		return 0, errors.New("Unparseable scale " + str)
-	}
-	i, _ := constant.Int64Val(v)
-	if i < 1 {
-		return 0, errors.New("Unparseable scale " + str)
-	}
-
-	return int(i), nil
+	str = args.Env.ReplaceVars(str, "${srcw}", srcsize.X, "${srch}", srcsize.Y)
+	return parse.SolveInt(str)
 }
