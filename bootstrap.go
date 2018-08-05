@@ -9,12 +9,12 @@ import (
 
 func init() {
 	// Register vars
-	phly.RegisterVar("srcw", "Source image width", "")
-	phly.RegisterVar("srch", "Source image height", "")
-	phly.RegisterVar("srcpath", "Source file path", "")
-	phly.RegisterVar("srcdir", "Source file path directory", "")
-	phly.RegisterVar("srcbase", "Source file name (excluding extension)", "")
-	phly.RegisterVar("srcext", "Source file extension", "")
+	phly.RegisterVar("srcw", "Source image width", nil)
+	phly.RegisterVar("srch", "Source image height", nil)
+	phly.RegisterVar("srcpath", "Source file path", nil)
+	phly.RegisterVar("srcdir", "Source file path directory", nil)
+	phly.RegisterVar("srcbase", "Source file name (excluding extension)", nil)
+	phly.RegisterVar("srcext", "Source file extension", nil)
 
 	// Register nodes
 	phly.Register(&load{})
