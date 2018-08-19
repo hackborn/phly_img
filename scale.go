@@ -31,12 +31,18 @@ func (n *scale) Instantiate(args phly.InstantiateArgs, cfg interface{}) (phly.No
 	return &scale{}, nil
 }
 
-func (n *scale) Run(args phly.RunArgs, input, output phly.Pins) error {
+func (n *scale) Run(args phly.RunArgs, input phly.Pins, sender phly.PinSender) (phly.Flow, error) {
 	var err error
+	pins := phly.NewPins()
 	for _, doc := range input.Get(scale_imginput) {
-		err = phly.MergeErrors(err, n.runDoc(args, doc, output))
+		err = phly.MergeErrors(err, n.runDoc(args, doc, pins))
 	}
-	return err
+	sender.SendPins(n, pins)
+	return phly.Finished, err
+}
+
+func (n *scale) Stop() error {
+	return nil
 }
 
 // runDoc() iterates the docs, pages and items, scaling each image.

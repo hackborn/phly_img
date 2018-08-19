@@ -30,12 +30,18 @@ func (n *save) Instantiate(args phly.InstantiateArgs, cfg interface{}) (phly.Nod
 	return &save{}, nil
 }
 
-func (n *save) Run(args phly.RunArgs, input, output phly.Pins) error {
+func (n *save) Run(args phly.RunArgs, input phly.Pins, sender phly.PinSender) (phly.Flow, error) {
 	var err error
+	pins := phly.NewPins()
 	for _, doc := range input.Get(save_imginput) {
-		err = phly.MergeErrors(err, n.runDoc(args, doc, output))
+		err = phly.MergeErrors(err, n.runDoc(args, doc, pins))
 	}
-	return err
+	sender.SendPins(n, pins)
+	return phly.Finished, err
+}
+
+func (n *save) Stop() error {
+	return nil
 }
 
 // runDoc() iterates the docs, pages and items, translating each filename into an image.

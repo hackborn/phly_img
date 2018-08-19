@@ -26,12 +26,19 @@ func (n *load) Instantiate(args phly.InstantiateArgs, cfg interface{}) (phly.Nod
 	return &load{}, nil
 }
 
-func (n *load) Run(args phly.RunArgs, input, output phly.Pins) error {
+func (n *load) Run(args phly.RunArgs, input phly.Pins, sender phly.PinSender) (phly.Flow, error) {
 	var err error
+	pins := phly.NewPins()
 	for _, doc := range input.Get(file_stringinput) {
-		err = phly.MergeErrors(err, n.runDoc(args, doc, output))
+		err = phly.MergeErrors(err, n.runDoc(args, doc, pins))
 	}
-	return err
+
+	sender.SendPins(n, pins)
+	return phly.Finished, err
+}
+
+func (n *load) Stop() error {
+	return nil
 }
 
 // runDoc() iterates the docs, pages and items, translating each filename into an image.
