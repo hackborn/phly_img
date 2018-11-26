@@ -1,6 +1,7 @@
 package phly_img
 
 import (
+	"fmt"
 	"github.com/hackborn/phly"
 	"image/png"
 	"os"
@@ -30,51 +31,29 @@ func (n *save) Instantiate(args phly.InstantiateArgs, cfg interface{}) (phly.Nod
 	return &save{}, nil
 }
 
-func (n *save) Run(args phly.RunArgs, input phly.Pins, sender phly.PinSender) (phly.Flow, error) {
+func (n *save) Process(args phly.ProcessArgs, stage phly.NodeStage, input phly.Pins, output phly.NodeOutput) error {
 	var err error
-	pins := phly.NewPins()
-	for _, doc := range input.Get(save_imginput) {
-		err = phly.MergeErrors(err, n.runDoc(args, doc, pins))
-	}
-	sender.SendPins(n, pins)
-	return phly.Finished, err
-}
-
-func (n *save) Stop() error {
-	return nil
-}
-
-// runDoc() iterates the docs, pages and items, translating each filename into an image.
-func (n *save) runDoc(args phly.RunArgs, srcdoc *phly.Doc, output phly.Pins) error {
-	if srcdoc == nil {
-		return phly.MissingDocErr
-	}
-	var err error
-	dstdoc := &phly.Doc{MimeType: MimeTypeImagePhly}
-	for _, page := range srcdoc.Pages {
-		dstpage := &phly.Page{}
-		for _, _img := range page.Items {
-			img, ok := _img.(*PhlyImage)
-			if !ok {
-				return phly.BadRequestErr
-			}
-			err = phly.MergeErrors(err, n.saveImage(args, img))
-			// Always just pass through to output
-			dstpage.AddItem(img)
+	doc := &phly.Doc{MimeType: MimeTypeImagePhly}
+	phly.WalkItems(input, save_imginput, func(channel string, src *phly.Doc, index int, _item interface{}) {
+		if item, ok := _item.(*PhlyImage); ok {
+			err = phly.MergeErrors(err, n.saveImage(args, item, doc))
 		}
-		if len(dstpage.Items) > 0 {
-			dstdoc.AddPage(dstpage)
-		}
+	})
+	if len(doc.Items) > 0 {
+		output.SendPins(phly.PinBuilder{}.Add(save_imgoutput, doc).Pins())
 	}
-	if len(dstdoc.Pages) > 0 {
-		output.Add(file_imgoutput, dstdoc)
-	}
+	// Run once and we're done
+	output.SendMsg(phly.MsgFromStop(nil))
 	return err
 }
 
-func (n *save) saveImage(args phly.RunArgs, img *PhlyImage) error {
+func (n *save) StopNode(args phly.StoppedArgs) error {
+	return nil
+}
+
+func (n *save) saveImage(args phly.ProcessArgs, img *PhlyImage, doc *phly.Doc) error {
 	if img == nil || img.Img == nil {
-		return phly.BadRequestErr
+		return phly.NewBadRequestError("phly/img/save on invalid image")
 	}
 
 	dstname, err := n.makeFilename(args, img)
@@ -90,18 +69,19 @@ func (n *save) saveImage(args phly.RunArgs, img *PhlyImage) error {
 		return err
 	}
 	defer f.Close()
+	doc.AppendItem(img)
 	return png.Encode(f, img.Img)
 }
 
 // makeFilename() applies my variables to make the filename.
-func (n *save) makeFilename(args phly.RunArgs, img *PhlyImage) (string, error) {
+func (n *save) makeFilename(args phly.ProcessArgs, img *PhlyImage) (string, error) {
 	// Start with getting the necessary pieces from the source
 	src := img.SourceFile
 	srcdir := filepath.Dir(src)
 	srcext := filepath.Ext(src)
 	srcbase := strings.TrimSuffix(filepath.Base(src), srcext)
 
-	return args.Env.ReplaceVars(n.File, "${srcpath}", src, "${srcdir}", srcdir, "${srcbase}", srcbase, "${srcext}", srcext), nil
+	return args.Env().ReplaceVars(n.File, "${srcpath}", src, "${srcdir}", srcdir, "${srcbase}", srcbase, "${srcext}", srcext), nil
 }
 
 // makeDir() makes the dir if it doesn't exist.

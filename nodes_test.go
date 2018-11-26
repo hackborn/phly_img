@@ -1,5 +1,6 @@
 package phly_img
 
+/*
 import (
 	"bytes"
 	"flag"
@@ -123,3 +124,4 @@ func testSaveImageTo(img *PhlyImage, w io.Writer) error {
 	}
 	return png.Encode(w, img.Img)
 }
+*/

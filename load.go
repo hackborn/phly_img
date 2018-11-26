@@ -7,18 +7,18 @@ import (
 )
 
 const (
-	file_stringinput = "file"
-	file_imgoutput   = "out"
+	load_stringinput = "file"
+	load_imgoutput   = "out"
 )
 
-// load struct node images from a filename.
+// load struct loads an image for each valid filename.
 type load struct {
 }
 
 func (n *load) Describe() phly.NodeDescr {
 	descr := phly.NodeDescr{Id: "phly/img/load", Name: "Load Image"}
-	descr.InputPins = append(descr.InputPins, phly.PinDescr{Name: file_stringinput, Purpose: "Supply file names to load."})
-	descr.OutputPins = append(descr.OutputPins, phly.PinDescr{Name: file_imgoutput, Purpose: "The loaded images, one for each file name input."})
+	descr.InputPins = append(descr.InputPins, phly.PinDescr{Name: load_stringinput, Purpose: "Supply file names to load."})
+	descr.OutputPins = append(descr.OutputPins, phly.PinDescr{Name: load_imgoutput, Purpose: "The loaded images, one for each file name input."})
 	return descr
 }
 
@@ -26,49 +26,27 @@ func (n *load) Instantiate(args phly.InstantiateArgs, cfg interface{}) (phly.Nod
 	return &load{}, nil
 }
 
-func (n *load) Run(args phly.RunArgs, input phly.Pins, sender phly.PinSender) (phly.Flow, error) {
+func (n *load) Process(args phly.ProcessArgs, stage phly.NodeStage, input phly.Pins, output phly.NodeOutput) error {
 	var err error
-	pins := phly.NewPins()
-	for _, doc := range input.Get(file_stringinput) {
-		err = phly.MergeErrors(err, n.runDoc(args, doc, pins))
+	doc := &phly.Doc{MimeType: MimeTypeImagePhly}
+	phly.WalkStringItems(input, load_stringinput, func(channel string, src *phly.Doc, index int, item string) {
+		err = phly.MergeErrors(err, loadFile(args.Filename(item), doc))
+	})
+	if len(doc.Items) > 0 {
+		output.SendPins(phly.PinBuilder{}.Add(load_imgoutput, doc).Pins())
 	}
-
-	sender.SendPins(n, pins)
-	return phly.Finished, err
-}
-
-func (n *load) Stop() error {
-	return nil
-}
-
-// runDoc() iterates the docs, pages and items, translating each filename into an image.
-func (n *load) runDoc(args phly.RunArgs, srcdoc *phly.Doc, output phly.Pins) error {
-	if srcdoc == nil {
-		return phly.MissingDocErr
-	}
-	var err error
-	dstdoc := &phly.Doc{MimeType: MimeTypeImagePhly}
-	for _, page := range srcdoc.Pages {
-		dstpage := &phly.Page{}
-		for _, _file := range page.Items {
-			file, ok := _file.(string)
-			if !ok {
-				return phly.BadRequestErr
-			}
-			err = phly.MergeErrors(err, loadFile(args.Filename(file), dstpage))
-		}
-		if len(dstpage.Items) > 0 {
-			dstdoc.AddPage(dstpage)
-		}
-	}
-	if len(dstdoc.Pages) > 0 {
-		output.Add(file_imgoutput, dstdoc)
-	}
+	// Run once and we're done
+	output.SendMsg(phly.MsgFromStop(nil))
 	return err
 }
 
-func loadFile(name string, page *phly.Page) error {
-	file, err := os.Open(name)
+func (n *load) StopNode(args phly.StoppedArgs) error {
+	return nil
+}
+
+// loadFile() loads the given filename to an image, placing it in the doc.
+func loadFile(filename string, dst *phly.Doc) error {
+	file, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
@@ -77,6 +55,6 @@ func loadFile(name string, page *phly.Page) error {
 	if err != nil {
 		return err
 	}
-	page.AddItem(&PhlyImage{Img: img, SourceFile: name})
+	dst.AppendItem(&PhlyImage{Img: img, SourceFile: filename})
 	return nil
 }
